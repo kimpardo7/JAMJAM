@@ -1,0 +1,58 @@
+.App {
+  text-align: center;
+  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #1db954, #191414);
+  color: white;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+h1 {
+  color: #1db954;
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.loading {
+  padding: 20px;
+  color: #1db954;
+  font-size: 1.2rem;
+}
+
+.error-message {
+  padding: 15px 20px;
+  background-color: rgba(233, 20, 41, 0.2);
+  border-radius: 5px;
+  color: #ff1631;
+  font-size: 1rem;
+  margin: 10px 0;
+}
+
+@media (min-width: 1024px) {
+  .content {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .content > * {
+    flex: 1;
+  }
+} 
