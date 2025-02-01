@@ -6,5 +6,5 @@ export interface Track {
   uri: string;
   albumUrl: string;
   duration: number;
-  previewUrl: string | null;
+  previewUrl: string;
 } 

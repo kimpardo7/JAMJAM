@@ -36,7 +36,9 @@ export function SearchResults({ results, onAddTrack }: SearchResultsProps) {
                   className="track-image"
                 />
                 <div className="track-play-overlay">
-                  <PlayButton previewUrl={track.previewUrl} size="medium" />
+                  {track.previewUrl && track.previewUrl !== '' && (
+                    <PlayButton previewUrl={track.previewUrl} size="medium" />
+                  )}
                 </div>
               </div>
               <div className="track-info">

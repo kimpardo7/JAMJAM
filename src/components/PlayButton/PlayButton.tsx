@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import './PlayButton.css';
 
 interface PlayButtonProps {
-  previewUrl: string | null;
+  previewUrl: string;
   size?: 'small' | 'medium' | 'large';
   isSpotifyUri?: boolean;
 }
@@ -30,7 +30,7 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
   }, []);
 
   const handlePlay = () => {
-    if (!previewUrl) return;
+    if (!previewUrl || previewUrl === '') return;
 
     if (isSpotifyUri) {
       // Open Spotify app or web player
@@ -58,7 +58,7 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
     }
   };
 
-  if (!previewUrl) {
+  if (!previewUrl || previewUrl === '') {
     return null;
   }
 

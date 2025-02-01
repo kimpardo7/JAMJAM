@@ -6,8 +6,9 @@ import { Playlist } from './components/Playlist/Playlist'
 import { UserProfile } from './components/UserProfile/UserProfile'
 import { PlaylistSidebar } from './components/PlaylistSidebar/PlaylistSidebar'
 import { Notification } from './components/Notification/Notification'
-import { searchTracks, createPlaylist, Track } from './services/musicApi'
+import { searchTracks, createPlaylist } from './services/musicApi'
 import { handleAuthResponse, isAuthenticated, getPlaylistTracks, initiateSpotifyLogin } from './utils/spotify'
+import { Track } from './types/Track'
 
 interface NotificationState {
   message: string;
