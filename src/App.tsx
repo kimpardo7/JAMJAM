@@ -3,7 +3,6 @@ import './App.css'
 import { Search } from './components/Search/Search'
 import { SearchResults } from './components/SearchResults/SearchResults'
 import { Playlist } from './components/Playlist/Playlist'
-import { SpotifyAuth } from './components/SpotifyAuth'
 import { searchTracks, createPlaylist, Track, loginToSpotify, isLoggedIn } from './services/musicApi'
 
 function App() {
@@ -60,7 +59,7 @@ function App() {
     <div className="App">
       <h1>JAM JAM</h1>
       {!isAuthenticated ? (
-        <button onClick={loginToSpotify}>Sign in to Spotify</button>
+        <button onClick={loginToSpotify} className="login-button">Sign in to Spotify</button>
       ) : (
         <>
           <Search onSearch={handleSearch} />
