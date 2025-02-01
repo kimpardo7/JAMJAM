@@ -1,12 +1,6 @@
 import './SearchResults.css';
-
-interface Track {
-  id: string;
-  name: string;
-  artist: string;
-  album: string;
-  uri: string;
-}
+import { Track as TrackComponent } from '../Track/Track';
+import { Track } from '../../services/musicApi';
 
 interface SearchResultsProps {
   results: Track[];
@@ -19,13 +13,12 @@ export function SearchResults({ results, onAddTrack }: SearchResultsProps) {
       <h2>Results</h2>
       <div className="tracks-list">
         {results.map((track) => (
-          <div key={track.id} className="track">
-            <div className="track-info">
-              <h3>{track.name}</h3>
-              <p>{track.artist} | {track.album}</p>
-            </div>
-            <button onClick={() => onAddTrack(track)}>+</button>
-          </div>
+          <TrackComponent
+            key={track.id}
+            track={track}
+            onAdd={onAddTrack}
+            isInPlaylist={false}
+          />
         ))}
       </div>
     </div>
