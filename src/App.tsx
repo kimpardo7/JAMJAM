@@ -3,6 +3,8 @@ import './App.css'
 import { Search } from './components/Search/Search'
 import { SearchResults } from './components/SearchResults/SearchResults'
 import { Playlist } from './components/Playlist/Playlist'
+import { UserProfile } from './components/UserProfile/UserProfile'
+import { PlaylistSidebar } from './components/PlaylistSidebar/PlaylistSidebar'
 import { searchTracks, createPlaylist, Track, loginToSpotify, isLoggedIn } from './services/musicApi'
 
 function App() {
@@ -57,24 +59,30 @@ function App() {
 
   return (
     <div className="App">
-      <h1>JAM JAM</h1>
       {!isAuthenticated ? (
-        <button onClick={loginToSpotify} className="login-button">Sign in to Spotify</button>
+        <div className="login-container">
+          <h1>JAM JAM</h1>
+          <button onClick={loginToSpotify} className="login-button">Sign in to Spotify</button>
+        </div>
       ) : (
         <>
-          <Search onSearch={handleSearch} />
-          {error && <div className="error-message">{error}</div>}
-          {isLoading && <div className="loading">Loading...</div>}
-          <div className="content">
-            <SearchResults 
-              results={searchResults} 
-              onAddTrack={handleAddTrack} 
-            />
-            <Playlist 
-              tracks={playlist}
-              onRemoveTrack={handleRemoveTrack}
-              onSave={handleSavePlaylist}
-            />
+          <PlaylistSidebar />
+          <div className="main-content">
+            <h1>JAM JAM</h1>
+            <UserProfile />
+            <Search onSearch={handleSearch} isLoading={isLoading} />
+            {error && <div className="error-message">{error}</div>}
+            <div className="content">
+              <SearchResults 
+                results={searchResults} 
+                onAddTrack={handleAddTrack} 
+              />
+              <Playlist 
+                tracks={playlist}
+                onRemoveTrack={handleRemoveTrack}
+                onSave={handleSavePlaylist}
+              />
+            </div>
           </div>
         </>
       )}
