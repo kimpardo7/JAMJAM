@@ -1,3 +1,5 @@
+import { Track } from '../services/musicApi';
+
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_REDIRECT_URI;
 
@@ -16,35 +18,59 @@ const generateRandomString = (length: number): string => {
   return values.reduce((acc, x) => acc + possible[x % possible.length], "");
 };
 
-// Save access token and expiration time
-const setAccessToken = (accessToken: string, expiresIn: number) => {
-  window.localStorage.setItem('spotify_access_token', accessToken);
-  const expirationTime = Date.now() + expiresIn * 1000;
-  window.localStorage.setItem('spotify_token_expires', expirationTime.toString());
+const TOKEN_KEY = 'spotify_access_token';
+const TOKEN_EXPIRY_KEY = 'spotify_token_expiry';
+
+export const handleAuthResponse = () => {
+  if (window.location.hash) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = params.get('access_token');
+    const expiresIn = params.get('expires_in');
+
+    if (accessToken && expiresIn) {
+      // Save token and expiry
+      localStorage.setItem(TOKEN_KEY, accessToken);
+      const expiryTime = Date.now() + Number(expiresIn) * 1000;
+      localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+
+      // Clear the URL hash without triggering a reload
+      window.history.replaceState(null, '', window.location.pathname);
+      return true;
+    }
+  }
+  return false;
 };
 
-// Get the access token from localStorage
-const getAccessToken = (): string | null => {
-  const accessToken = window.localStorage.getItem('spotify_access_token');
-  const expirationTime = window.localStorage.getItem('spotify_token_expires');
+export const getAccessToken = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
 
-  if (!accessToken || !expirationTime) {
+  if (!token || !expiry) {
     return null;
   }
 
-  if (Date.now() > parseInt(expirationTime)) {
-    // Token has expired
-    window.localStorage.removeItem('spotify_access_token');
-    window.localStorage.removeItem('spotify_token_expires');
+  // Check if token is expired
+  if (Date.now() > Number(expiry)) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXPIRY_KEY);
     return null;
   }
 
-  return accessToken;
+  return token;
+};
+
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_EXPIRY_KEY);
+};
+
+export const isAuthenticated = () => {
+  return !!getAccessToken();
 };
 
 export const initiateSpotifyLogin = () => {
   const state = generateRandomString(16);
-  window.localStorage.setItem('spotify_auth_state', state);
+  localStorage.setItem('spotify_auth_state', state);
 
   const args = new URLSearchParams({
     response_type: 'token',
@@ -63,18 +89,20 @@ export const handleRedirect = (): boolean => {
 
   const accessToken = params.get('access_token');
   const state = params.get('state');
-  const storedState = window.localStorage.getItem('spotify_auth_state');
+  const storedState = localStorage.getItem('spotify_auth_state');
   const expiresIn = params.get('expires_in');
 
   // Clear the state
-  window.localStorage.removeItem('spotify_auth_state');
+  localStorage.removeItem('spotify_auth_state');
 
   if (!accessToken || state !== storedState) {
     return false;
   }
 
   if (expiresIn) {
-    setAccessToken(accessToken, parseInt(expiresIn));
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    const expiryTime = Date.now() + Number(expiresIn) * 1000;
+    localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
   }
 
   // Remove the hash from the URL
@@ -154,4 +182,33 @@ export const getUserPlaylists = async () => {
   }
 
   return response.json();
+};
+
+export const getPlaylistTracks = async (playlistId: string): Promise<Track[]> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch playlist tracks');
+  }
+
+  const data = await response.json();
+  return data.items.map((item: any) => ({
+    id: item.track.id,
+    title: item.track.name,
+    artist: item.track.artists[0].name,
+    album: item.track.album.name,
+    uri: item.track.uri,
+    albumUrl: item.track.album.images[0]?.url,
+    duration: Math.floor(item.track.duration_ms / 1000),
+    previewUrl: item.track.preview_url
+  }));
 }; 

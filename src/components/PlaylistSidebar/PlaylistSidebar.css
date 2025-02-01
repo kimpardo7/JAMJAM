@@ -1,22 +1,50 @@
 .playlist-sidebar {
-  width: 300px;
+  width: 380px;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  padding: 20px;
+  padding: 25px;
   overflow-y: auto;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Playfair Display', serif;
+}
+
+.playlist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
 }
 
 .playlist-sidebar h2 {
   color: white;
+  font-size: 1.8rem;
+  padding-bottom: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.new-playlist-btn {
+  background: rgba(255, 105, 180, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
   font-size: 1.5rem;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid rgba(255, 105, 180, 0.3);
+}
+
+.new-playlist-btn:hover {
+  background: rgba(255, 105, 180, 0.3);
+  transform: scale(1.05);
 }
 
 .playlists-list {
@@ -26,43 +54,199 @@
 }
 
 .playlist-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
   transition: all 0.3s ease;
   cursor: pointer;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+/* Only apply animation to newly added items */
+.playlist-item.new-item {
+  animation: fadeIn 0.3s ease forwards;
+  animation-delay: calc(var(--index) * 0.1s);
+  opacity: 0;
 }
 
 .playlist-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.playlist-item.selected {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.playlist-image-container {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .playlist-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.playlist-play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(2px);
+}
+
+.playlist-image-container:hover .playlist-play-overlay {
+  opacity: 1;
+}
+
+.playlist-play-overlay .play-button {
+  transform: scale(0.9);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.playlist-image-container:hover .playlist-play-overlay .play-button {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.edit-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.playlist-image-container:hover .edit-image-overlay {
+  opacity: 1;
+}
+
+.edit-image-icon {
+  color: #fff;
+  font-size: 1.2rem;
 }
 
 .playlist-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
 }
 
 .playlist-name {
-  color: white;
+  font-size: 1rem;
   font-weight: 500;
-  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.playlist-name-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  padding: 4px 8px;
+  width: 100%;
+  display: none;
+}
+
+.playlist-name-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.playlist-item.editing .playlist-name {
+  display: none;
+}
+
+.playlist-item.editing .playlist-name-input {
+  display: block;
 }
 
 .playlist-tracks {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.playlist-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.playlist-item:hover .playlist-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.action-btn.delete:hover {
+  background: rgba(255, 0, 0, 0.1);
+  color: var(--error);
 }
 
 .loading-playlists {
@@ -70,6 +254,25 @@
   text-align: center;
   padding: 20px;
   font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-playlists::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #ff69b4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* File input styling */
+.image-input {
+  display: none;
 }
 
 /* Scrollbar styling */
@@ -92,10 +295,133 @@
 
 @media (max-width: 1024px) {
   .playlist-sidebar {
-    position: static;
     width: 100%;
     height: auto;
+    position: static;
     max-height: 300px;
     margin-bottom: 20px;
   }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .playlist-item {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .playlist-image-container,
+  .playlist-image {
+    width: 48px;
+    height: 48px;
+  }
+
+  .playlist-name {
+    font-size: 0.95rem;
+  }
+
+  .playlist-tracks {
+    font-size: 0.8rem;
+    padding: 3px 10px;
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+/* Optimize transitions */
+.playlist-item, 
+.playlist-image, 
+.playlist-name,
+.playlist-actions,
+.action-btn {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Update animation to be smoother */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Add tooltip for truncated text */
+.playlist-name {
+  position: relative;
+}
+
+.playlist-name:hover::after {
+  content: attr(data-full-name);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  white-space: normal;
+  max-width: 200px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+}
+
+.playlist-name:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Update the main content margin to match the new sidebar width */
+.main-content {
+  margin-left: 380px;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.track-count {
+  background: rgba(255, 105, 180, 0.15);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  min-width: 28px;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 105, 180, 0.2);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.playlist-item:hover .track-count {
+  background: rgba(255, 105, 180, 0.2);
+  border-color: rgba(255, 105, 180, 0.3);
+}
+
+.playlist-item.selected .track-count {
+  background: rgba(255, 105, 180, 0.25);
+  border-color: rgba(255, 105, 180, 0.4);
+  color: white;
 } 

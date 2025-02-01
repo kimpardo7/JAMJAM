@@ -1,3 +1,6 @@
+import { Track } from '../types/Track';
+import { getAccessToken } from '../utils/spotify';
+
 const API_KEY = '27ec92f205mshb372f8bfbd1b341p126e13jsn0d0f9fa780c0';
 const API_HOST = 'deezerdevs-deezer.p.rapidapi.com'; // We'll use Deezer API as an example
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
@@ -11,77 +14,45 @@ export interface Track {
   title: string;
   artist: string;
   album: string;
-  preview: string;
-  uri?: string; // Spotify URI for the track
+  uri: string;
+  albumUrl: string;
+  duration: number; // Duration in seconds
+  previewUrl: string;
 }
 
-export async function searchTracks(query: string): Promise<Track[]> {
-  const token = getAccessToken();
-  if (token) {
-    // If we have a Spotify token, search using Spotify API
-    return searchSpotifyTracks(query, token);
+export const searchTracks = async (query: string): Promise<Track[]> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error('No access token available');
   }
 
-  // Fallback to Deezer if no Spotify auth
-  const url = `https://${API_HOST}/search?q=${encodeURIComponent(query)}`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
+  const response = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+      query
+    )}&type=track&limit=20`,
+    {
       headers: {
-        'X-RapidAPI-Key': API_KEY,
-        'X-RapidAPI-Host': API_HOST,
+        Authorization: `Bearer ${accessToken}`,
       },
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
     }
+  );
 
-    const data = await response.json();
-    
-    return data.data.map((item: any) => ({
-      id: item.id.toString(),
-      title: item.title,
-      artist: item.artist.name,
-      album: item.album.title,
-      preview: item.preview
-    }));
-  } catch (error) {
-    console.error('Error searching tracks:', error);
-    return [];
+  if (!response.ok) {
+    throw new Error('Failed to search tracks');
   }
-}
 
-async function searchSpotifyTracks(query: string, token: string): Promise<Track[]> {
-  try {
-    const response = await fetch(
-      `${SPOTIFY_API_BASE}/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to search Spotify');
-    }
-
-    const data = await response.json();
-    return data.tracks.items.map((track: any) => ({
-      id: track.id,
-      title: track.name,
-      artist: track.artists[0].name,
-      album: track.album.name,
-      preview: track.preview_url,
-      uri: track.uri
-    }));
-  } catch (error) {
-    console.error('Error searching Spotify:', error);
-    return [];
-  }
-}
+  const data = await response.json();
+  return data.tracks.items.map((item: any) => ({
+    id: item.id,
+    title: item.name,
+    artist: item.artists[0].name,
+    album: item.album.name,
+    uri: item.uri,
+    albumUrl: item.album.images[0]?.url,
+    duration: Math.floor(item.duration_ms / 1000),
+    previewUrl: item.preview_url
+  }));
+};
 
 export async function createPlaylist(name: string, tracks: Track[]): Promise<boolean> {
   const token = getAccessToken();
