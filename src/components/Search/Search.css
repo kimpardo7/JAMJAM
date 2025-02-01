@@ -1,45 +1,99 @@
 .search {
   width: 100%;
   max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+  margin: 2rem auto;
+  padding: 0 1rem;
 }
 
 .search form {
   display: flex;
   gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.search form:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .search input {
   flex: 1;
-  padding: 12px 20px;
+  background: transparent;
   border: none;
-  border-radius: 25px;
-  background-color: rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+  font-size: 1.1rem;
   color: white;
-  font-size: 1rem;
+  outline: none;
 }
 
 .search input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.search input:focus {
-  outline: none;
-  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .search button {
-  padding: 12px 30px;
-  border: none;
-  border-radius: 25px;
-  background-color: #d65e8e;
+  background: #ff69b4;
   color: white;
-  font-size: 1rem;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
 }
 
 .search button:hover {
-  background-color: #1ed760;
+  background: #ff1493;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+}
+
+.search button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+}
+
+/* Add loading animation */
+.search button.loading {
+  position: relative;
+  padding-right: 40px;
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.search button.loading::after {
+  content: '';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Add shake animation for empty search */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.search form.shake {
+  animation: shake 0.3s ease-in-out;
 } 

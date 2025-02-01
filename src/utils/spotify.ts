@@ -114,4 +114,44 @@ export const spotifyRequest = async (endpoint: string, options: RequestInit = {}
   }
 
   return response.json();
+};
+
+// Add this new function to fetch user profile
+export const getUserProfile = async () => {
+  const accessToken = getSpotifyAccessToken();
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
+  const response = await fetch('https://api.spotify.com/v1/me', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch user profile');
+  }
+
+  return response.json();
+};
+
+// Add function to fetch user's playlists
+export const getUserPlaylists = async () => {
+  const accessToken = getSpotifyAccessToken();
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
+  const response = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch playlists');
+  }
+
+  return response.json();
 }; 
