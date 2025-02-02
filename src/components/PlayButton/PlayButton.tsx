@@ -4,12 +4,12 @@ import './PlayButton.css';
 interface PlayButtonProps {
   previewUrl: string;
   size?: 'small' | 'medium' | 'large';
-  isSpotifyUri?: boolean;
 }
 
-export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }: PlayButtonProps) {
+export function PlayButton({ previewUrl, size = 'medium' }: PlayButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -30,11 +30,8 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
   }, []);
 
   const handlePlay = () => {
-    if (!previewUrl || previewUrl === '') return;
-
-    if (isSpotifyUri) {
-      // Open Spotify app or web player
-      window.open(previewUrl, '_blank');
+    if (!previewUrl) {
+      setError('No preview available for this track');
       return;
     }
 
@@ -42,7 +39,14 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
       stopOtherAudio();
       const newAudio = new Audio(previewUrl);
       newAudio.addEventListener('ended', () => setIsPlaying(false));
-      newAudio.play();
+      newAudio.addEventListener('error', () => {
+        setError('Failed to load audio preview');
+        setIsPlaying(false);
+      });
+      newAudio.play().catch(() => {
+        setError('Failed to play audio preview');
+        setIsPlaying(false);
+      });
       setAudio(newAudio);
       setIsPlaying(true);
     } else {
@@ -52,14 +56,25 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
         setIsPlaying(false);
       } else {
         stopOtherAudio();
-        audio.play();
+        audio.play().catch(() => {
+          setError('Failed to play audio preview');
+          setIsPlaying(false);
+        });
         setIsPlaying(true);
       }
     }
   };
 
-  if (!previewUrl || previewUrl === '') {
-    return null;
+  if (!previewUrl) {
+    return (
+      <button 
+        className={`play-button ${size} disabled`}
+        disabled={true}
+        title="No preview available"
+      >
+        ⚠️
+      </button>
+    );
   }
 
   return (
@@ -70,8 +85,9 @@ export function PlayButton({ previewUrl, size = 'medium', isSpotifyUri = false }
         handlePlay();
       }}
       aria-label={isPlaying ? 'Pause preview' : 'Play preview'}
+      title={error || (isPlaying ? 'Pause preview' : 'Play preview')}
     >
-      {isSpotifyUri ? '▶' : (isPlaying ? '⏸' : '▶')}
+      {error ? '⚠️' : (isPlaying ? '⏸' : '▶')}
     </button>
   );
 } 

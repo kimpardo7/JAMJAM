@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUserPlaylists } from '../../utils/spotify';
-import { isAuthenticated } from '../../utils/spotify';
+import { getUserPlaylists, getPlaylistTracks, isAuthenticated, initiateSpotifyLogin } from '../../utils/spotify';
 import { PlayButton } from '../PlayButton/PlayButton';
 import './PlaylistSidebar.css';
+import { Track } from '../../types/Track';
 
 interface Playlist {
   id: string;
@@ -24,6 +24,7 @@ export function PlaylistSidebar({
   selectedPlaylistId 
 }: PlaylistSidebarProps) {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlistPreviews, setPlaylistPreviews] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +38,20 @@ export function PlaylistSidebar({
     try {
       const data = await getUserPlaylists();
       setPlaylists(data.items);
+      
+      // Fetch preview URLs for the first track of each playlist
+      const previews: Record<string, string> = {};
+      for (const playlist of data.items) {
+        try {
+          const tracks = await getPlaylistTracks(playlist.id);
+          if (tracks.length > 0) {
+            previews[playlist.id] = tracks[0].previewUrl;
+          }
+        } catch (err) {
+          console.error(`Failed to fetch preview for playlist ${playlist.id}:`, err);
+        }
+      }
+      setPlaylistPreviews(previews);
       setError(null);
     } catch (err) {
       setError('Failed to load playlists');
@@ -47,55 +62,45 @@ export function PlaylistSidebar({
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    fetchPlaylists();
+  }, [fetchPlaylists, refreshTrigger]);
 
-    const loadPlaylists = async () => {
-      if (!isAuthenticated()) {
-        if (isMounted) {
-          setPlaylists([]);
-          setIsLoading(false);
-        }
-        return;
-      }
+  if (!isAuthenticated()) {
+    return (
+      <div className="playlist-sidebar">
+        <div className="playlist-header">
+          <h2>Your Playlists</h2>
+        </div>
+        <div className="login-prompt">
+          <p>Please log in to see your playlists</p>
+          <button 
+            className="spotify-login-btn"
+            onClick={() => initiateSpotifyLogin()}
+          >
+            Login with Spotify
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-      try {
-        const data = await getUserPlaylists();
-        if (isMounted) {
-          setPlaylists(data.items);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('Failed to load playlists');
-          console.error(err);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+  if (isLoading) {
+    return (
+      <div className="playlist-sidebar">
+        <div className="playlist-header">
+          <h2>Your Playlists</h2>
+        </div>
+        <div className="loading-playlists">
+          <span className="loading-spinner"></span>
+          <span>Loading your playlists...</span>
+        </div>
+      </div>
+    );
+  }
 
-    loadPlaylists();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [refreshTrigger]);
-
-  const handlePlaylistClick = (playlistId: string) => {
-    if (onPlaylistSelect) {
-      onPlaylistSelect(playlistId);
-    }
-  };
-
-  const handleNewPlaylist = () => {
-    if (onPlaylistSelect) {
-      onPlaylistSelect(''); // Clear selected playlist
-    }
-  };
-
-  if (error) return null;
+  if (error) {
+    return <div className="playlist-sidebar">Error: {error}</div>;
+  }
 
   return (
     <div className="playlist-sidebar">
@@ -104,77 +109,47 @@ export function PlaylistSidebar({
         <button 
           className="new-playlist-btn" 
           aria-label="Create new playlist"
-          onClick={handleNewPlaylist}
+          onClick={() => onPlaylistSelect?.('')}
         >
           +
         </button>
       </div>
       
-      {isLoading ? (
-        <div className="loading-playlists">Loading playlists...</div>
-      ) : (
-        <div className="playlists-list">
-          {playlists.map((playlist, index) => (
-            <div
-              key={playlist.id}
-              className={`playlist-item ${selectedPlaylistId === playlist.id ? 'selected' : ''}`}
-              onClick={() => handlePlaylistClick(playlist.id)}
-              style={{ '--index': index } as React.CSSProperties}
-            >
-              <div className="playlist-image-container">
-                {playlist.images[0] && (
-                  <img 
-                    src={playlist.images[0].url} 
-                    alt={`${playlist.name} cover`}
-                    className="playlist-image"
-                  />
-                )}
-                <div className="playlist-play-overlay">
-                  <PlayButton 
-                    previewUrl={playlist.uri} 
-                    size="medium" 
-                    isSpotifyUri={true}
-                  />
-                </div>
-              </div>
-              <div className="playlist-info">
-                <span 
-                  className="playlist-name"
-                  data-full-name={playlist.name}
-                  title={playlist.name}
-                >
-                  {playlist.name}
-                </span>
-                <span className="track-count">
-                  {playlist.tracks.total}
-                </span>
-              </div>
-              <div className="playlist-actions">
-                <button 
-                  className="action-btn" 
-                  aria-label="Edit playlist"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Add edit handler
-                  }}
-                >
-                  ✎
-                </button>
-                <button 
-                  className="action-btn delete" 
-                  aria-label="Delete playlist"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Add delete handler
-                  }}
-                >
-                  ×
-                </button>
-              </div>
+      <div className="playlists-list">
+        {playlists.map((playlist, index) => (
+          <div 
+            key={playlist.id}
+            className={`playlist-item ${selectedPlaylistId === playlist.id ? 'selected' : ''}`}
+            onClick={() => onPlaylistSelect?.(playlist.id)}
+          >
+            <div className="playlist-image-container">
+              {playlist.images[0] && (
+                <img 
+                  src={playlist.images[0].url} 
+                  alt={playlist.name}
+                  className="playlist-image"
+                />
+              )}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="playlist-info">
+              <span 
+                className="playlist-name"
+                data-full-name={playlist.name}
+                title={playlist.name}
+              >
+                {playlist.name}
+              </span>
+              <span className="track-count">
+                {playlist.tracks.total} tracks
+              </span>
+            </div>
+            <PlayButton 
+              previewUrl={playlistPreviews[playlist.id] || ''}
+              size="small"
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 } 
