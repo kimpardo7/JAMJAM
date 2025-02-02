@@ -1,111 +1,37 @@
-const API_KEY = '27ec92f205mshb372f8bfbd1b341p126e13jsn0d0f9fa780c0';
-const API_HOST = 'deezerdevs-deezer.p.rapidapi.com'; // We'll use Deezer API as an example
-const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
-const SPOTIFY_AUTHORIZE_ENDPOINT = 'https://accounts.spotify.com/authorize';
+import type { Track } from '../types/Track';
+import { spotifyRequest } from '../utils/spotify';
+
 const SPOTIFY_API_BASE = 'https://api.spotify.com/v1';
-const SCOPES = ['playlist-modify-public', 'playlist-modify-private'];
 
-export interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  preview: string;
-  uri?: string; // Spotify URI for the track
-}
+export const searchTracks = async (query: string): Promise<Track[]> => {
+  const data = await spotifyRequest(
+    `/search?q=${encodeURIComponent(query)}&type=track&limit=20`
+  );
 
-export async function searchTracks(query: string): Promise<Track[]> {
-  const token = getAccessToken();
-  if (token) {
-    // If we have a Spotify token, search using Spotify API
-    return searchSpotifyTracks(query, token);
-  }
+  return data.tracks.items.map((item: any) => ({
+    id: item.id,
+    title: item.name,
+    artist: item.artists[0].name,
+    album: item.album.name,
+    uri: item.uri,
+    albumUrl: item.album.images[0]?.url,
+    duration: Math.floor(item.duration_ms / 1000),
+    previewUrl: item.preview_url || ''
+  }));
+};
 
-  // Fallback to Deezer if no Spotify auth
-  const url = `https://${API_HOST}/search?q=${encodeURIComponent(query)}`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-RapidAPI-Key': API_KEY,
-        'X-RapidAPI-Host': API_HOST,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-
-    const data = await response.json();
-    
-    return data.data.map((item: any) => ({
-      id: item.id.toString(),
-      title: item.title,
-      artist: item.artist.name,
-      album: item.album.title,
-      preview: item.preview
-    }));
-  } catch (error) {
-    console.error('Error searching tracks:', error);
-    return [];
-  }
-}
-
-async function searchSpotifyTracks(query: string, token: string): Promise<Track[]> {
-  try {
-    const response = await fetch(
-      `${SPOTIFY_API_BASE}/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to search Spotify');
-    }
-
-    const data = await response.json();
-    return data.tracks.items.map((track: any) => ({
-      id: track.id,
-      title: track.name,
-      artist: track.artists[0].name,
-      album: track.album.name,
-      preview: track.preview_url,
-      uri: track.uri
-    }));
-  } catch (error) {
-    console.error('Error searching Spotify:', error);
-    return [];
-  }
-}
-
-export async function createPlaylist(name: string, tracks: Track[]): Promise<boolean> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated with Spotify');
-  }
-
+export const createPlaylist = async (name: string, tracks: Track[]): Promise<boolean> => {
   try {
     // Get user ID
-    const userResponse = await fetch(`${SPOTIFY_API_BASE}/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const userData = await userResponse.json();
+    const userData = await spotifyRequest('/me');
     const userId = userData.id;
 
     // Create playlist
-    const createResponse = await fetch(
-      `${SPOTIFY_API_BASE}/users/${userId}/playlists`,
+    const playlistData = await spotifyRequest(
+      `/users/${userId}/playlists`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -115,7 +41,6 @@ export async function createPlaylist(name: string, tracks: Track[]): Promise<boo
         }),
       }
     );
-    const playlistData = await createResponse.json();
 
     // Add tracks to playlist
     const trackUris = tracks
@@ -123,12 +48,11 @@ export async function createPlaylist(name: string, tracks: Track[]): Promise<boo
       .map(track => track.uri);
 
     if (trackUris.length > 0) {
-      await fetch(
-        `${SPOTIFY_API_BASE}/playlists/${playlistData.id}/tracks`,
+      await spotifyRequest(
+        `/playlists/${playlistData.id}/tracks`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -143,7 +67,7 @@ export async function createPlaylist(name: string, tracks: Track[]): Promise<boo
     console.error('Error creating Spotify playlist:', error);
     return false;
   }
-}
+};
 
 export const loginToSpotify = () => {
   // Generate a random state value for security
