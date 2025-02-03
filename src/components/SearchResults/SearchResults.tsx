@@ -11,10 +11,7 @@ export function SearchResults({ results, onAddTrack }: SearchResultsProps) {
   return (
     <div className="search-results">
       <div className="search-results-header">
-        <h2 className="search-results-title">Results</h2>
-        {results.length > 0 && (
-          <span className="results-count">{results.length} tracks</span>
-        )}
+        <h2 className="results-title">Search Results</h2>
       </div>
 
       {results.length === 0 ? (

@@ -80,8 +80,9 @@ export function Playlist({ tracks, onRemoveTrack, onSave, onReorder, mode = 'cre
   return (
     <div className="playlist">
       <div className="playlist-header">
-        <div className="playlist-icon">✏️</div>
-        <h2>{mode === 'edit' ? 'Edit Playlist' : 'Create Playlist'}</h2>
+        <h2 className="create-playlist-title">
+          {mode === 'edit' ? 'Edit Playlist' : 'Create Playlist'}
+        </h2>
       </div>
       <div className="playlist-actions">
         <input

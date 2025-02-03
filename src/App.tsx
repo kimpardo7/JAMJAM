@@ -160,18 +160,19 @@ function App() {
             <UserProfile />
             <Search onSearch={handleSearch} isLoading={isLoading} />
             {error && <div className="error-message">{error}</div>}
-            <div className="content">
-              <SearchResults 
-                results={searchResults} 
-                onAddTrack={handleAddTrack} 
-              />
-              <Playlist 
-                tracks={playlist}
-                onRemoveTrack={handleRemoveTrack}
-                onSave={handleSavePlaylist}
-                onReorder={handleReorderTracks}
-                mode={selectedPlaylistId ? 'edit' : 'create'}
-              />
+            <div className="sections-container">
+              <div className="results-section">
+                <SearchResults results={searchResults} onAddTrack={handleAddTrack} />
+              </div>
+              <div className="create-playlist-section">
+                <Playlist
+                  tracks={playlist}
+                  onRemoveTrack={handleRemoveTrack}
+                  onSave={handleSavePlaylist}
+                  onReorder={handleReorderTracks}
+                  mode={selectedPlaylistId ? 'edit' : 'create'}
+                />
+              </div>
             </div>
           </div>
         </>
